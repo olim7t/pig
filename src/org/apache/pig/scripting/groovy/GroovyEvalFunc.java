@@ -65,7 +65,7 @@ public class GroovyEvalFunc<T> extends EvalFunc<T> {
 
     if (null == c) {
       try {
-        c = GroovyScriptEngine.getEngine().loadScriptByName(path);
+        c = GroovyScriptEngine.loadScriptByPath(path);
       } catch (ScriptException se) {
         throw new IOException(se);
       } catch (ResourceException re) {

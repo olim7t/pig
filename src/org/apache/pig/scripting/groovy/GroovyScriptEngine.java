@@ -22,7 +22,11 @@ import groovy.lang.Tuple;
 import groovy.util.ResourceException;
 import groovy.util.ScriptException;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -99,7 +103,7 @@ public class GroovyScriptEngine extends ScriptEngine {
       // Load the script
       //
 
-      Class c = gse.loadScriptByName(scriptFile);
+      Class c = loadScriptByPath(scriptFile);
 
       //
       // Extract the main method
@@ -141,7 +145,7 @@ public class GroovyScriptEngine extends ScriptEngine {
       // Read file
       //
 
-      Class c = gse.loadScriptByName(path);
+      Class c = loadScriptByPath(path);
 
       //
       // Keep track of initial/intermed/final methods of Albegraic UDFs
@@ -439,5 +443,34 @@ public class GroovyScriptEngine extends ScriptEngine {
     return annotation.annotationType().equals(AccumulatorAccumulate.class)
            || annotation.annotationType().equals(AccumulatorGetValue.class)
            || annotation.annotationType().equals(AccumulatorCleanup.class);
+  }
+
+  public static Class loadScriptByPath(String path) throws ScriptException, ResourceException, IOException {
+    //
+    // We need to create a temp file first so we can copy the script content to it
+    //
+
+    File temp = File.createTempFile("groovy-", "", new File("."));   
+    temp.deleteOnExit();
+
+    OutputStream out = new FileOutputStream(temp);
+    InputStream in = getScriptAsStream(path);
+
+    byte[] buf = new byte[1024];
+
+    while(true) {
+      int len = in.read(buf);
+
+      if (len < 0) {
+        break;
+      }
+
+      out.write(buf, 0, len);
+    }
+
+    in.close();
+    out.close();
+
+    return getEngine().loadScriptByName(temp.getPath());
   }
 }
